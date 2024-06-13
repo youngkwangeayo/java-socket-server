@@ -11,10 +11,13 @@ import java.util.Base64;
 public class LocakSocket {
 
     public static void main(String[] args) {
+        // 소켓서버를 열음
         try (ServerSocket serverSocket = new ServerSocket(8811)) {
             System.out.println("WebSocket server started on port 8811");
 
+            // while이 없으면 한번 동작 후 끊기기 때문에 와일안에
             while (true) {
+                // accept 함수가 연결을 대기하고 있다 연결이되면 밑에 로직이 실행이된다.
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress());
 
@@ -27,6 +30,7 @@ public class LocakSocket {
                 while (!(data = in.readLine()).isEmpty()) {
                     request.append(data).append("\r\n");
                 }
+                // System.out.println(request);
 
                 // WebSocket 키 추출
                 String key = request.toString().lines()
@@ -34,13 +38,14 @@ public class LocakSocket {
                         .map(line -> line.split(":")[1].trim())
                         .findFirst()
                         .orElse(null);
-
+                
+                
                 if (key != null) {
                     String responseKey = Base64.getEncoder().encodeToString(
                             MessageDigest.getInstance("SHA-1")
                                     .digest((key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes(StandardCharsets.UTF_8))
                     );
-
+                    
                     // WebSocket 핸드셰이크 응답 전송
                     String response = "HTTP/1.1 101 Switching Protocols\r\n"
                             + "Upgrade: websocket\r\n"
