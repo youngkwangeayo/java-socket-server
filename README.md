@@ -21,12 +21,23 @@ WebSocket은 tcp/ip 통신에서 구현
 > Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits </br>
 
 
-- `응답 해더`
+
+
+- ## 응답 해더
+
+
+    - `응답 헤더 작성 방법` 
+        WebSocket 표준에 따라 고정된 GUID : 258EAFA5-E914-47DA-95CA-C5AB0DC85B11
+        Sec-WebSocket-Accept : 에다가 요청에 key + guid 를 `SHA1` 해싱 후 다시 base64 엔코딩을 진행
+
+    - `응답 헤더`
 > HTTP/1.1 101 Switching Protocols       :`변경될 헤더가 들어있어야함` </br>
 > Upgrade: websocket </br>
 > Connection: Upgrade </br>
-> Sec-WebSocket-Accept: HSmrc0sMlYUkAGmm5OPpG2HaGWk= </br>
+> Sec-WebSocket-Accept: HSmrc0sMlYUkAGmm5OPpG2HaGWk= </br> 
 > Sec-WebSocket-Protocol: chat </br>
+
+
 
 
 ## Folder Structure
