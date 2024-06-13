@@ -6,8 +6,8 @@ WebSocket은 tcp/ip 통신에서 구현
 
 핸들러쉐이크
 - `http get 요청으로 클라이언트의 요청 `
->  GET / HTTP/1.1               : `get 요청이 있어야함 http 와`
->  Host: 127.0.0.1:8811
+>  GET / HTTP/1.1 \n               : `get 요청이 있어야함 http 와`
+>  Host: 127.0.0.1:8811 \n
 > Connection: Upgrade
 > Pragma: no-cache
 > Cache-Control: no-cache
