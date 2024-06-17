@@ -21,16 +21,17 @@ public class LocakSocket {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress());
 
+                
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 OutputStream out = clientSocket.getOutputStream();
-
+  
                 // HTTP 요청 헤더 읽기
                 String data;
                 StringBuilder request = new StringBuilder();
                 while (!(data = in.readLine()).isEmpty()) {
                     request.append(data).append("\r\n");
                 }
-                // System.out.println(request);
+                
 
                 // WebSocket 키 추출
                 String key = request.toString().lines()
@@ -38,14 +39,13 @@ public class LocakSocket {
                         .map(line -> line.split(":")[1].trim())
                         .findFirst()
                         .orElse(null);
-                
-                
+
                 if (key != null) {
                     String responseKey = Base64.getEncoder().encodeToString(
                             MessageDigest.getInstance("SHA-1")
                                     .digest((key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes(StandardCharsets.UTF_8))
                     );
-                    
+
                     // WebSocket 핸드셰이크 응답 전송
                     String response = "HTTP/1.1 101 Switching Protocols\r\n"
                             + "Upgrade: websocket\r\n"
@@ -68,8 +68,12 @@ public class LocakSocket {
                         }
                         String receivedMessage = decodeWebSocketFrame(buffer, read);
                         System.out.println("Received: " + receivedMessage);
+                        
+                        String sendMessage = receivedMessage + ": 너가 보낸거";
+                        System.out.println(sendMessage);
                         // 클라이언트에게 메시지 에코
-                        out.write(encodeWebSocketFrame(receivedMessage.getBytes(StandardCharsets.UTF_8)));
+                        // out.write(encodeWebSocketFrame(receivedMessage.getBytes(StandardCharsets.UTF_8)));
+                        out.write(encodeWebSocketFrame(sendMessage.getBytes(StandardCharsets.UTF_8)));
                         out.flush();
                     }
                 }
@@ -90,6 +94,42 @@ public class LocakSocket {
     }
 
     private static String decodeWebSocketFrame(byte[] buffer, int length) {
+        int offset = 0;
+
+        // 첫 번째 바이트
+        byte b1 = buffer[offset++];
+
+        // 두 번째 바이트
+        byte b2 = buffer[offset++];
+
+        boolean masked = (b2 & 0x80) != 0;
+        int dataLength = b2 & 0x7F;
+
+        if (dataLength == 126) {
+            dataLength = ((buffer[offset++] & 0xFF) << 8) | (buffer[offset++] & 0xFF);
+        } else if (dataLength == 127) {
+            dataLength = 0;
+            for (int i = 0; i < 8; i++) {
+                dataLength = (dataLength << 8) | (buffer[offset++] & 0xFF);
+            }
+        }
+
+        byte[] masks = new byte[4];
+        if (masked) {
+            for (int i = 0; i < 4; i++) {
+                masks[i] = buffer[offset++];
+            }
+        }
+
+        byte[] data = new byte[dataLength];
+        for (int i = 0; i < dataLength; i++) {
+            data[i] = (byte) (buffer[offset++] ^ masks[i % 4]);
+        }
+
+        return new String(data, StandardCharsets.UTF_8);
+    }
+
+    private static String decodeWebSocketFrameBefore(byte[] buffer, int length) {
         int dataLength = buffer[1] & 0x7F;
         byte[] data = new byte[dataLength];
         System.arraycopy(buffer, 2, data, 0, dataLength);
